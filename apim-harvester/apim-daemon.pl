@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use warnings;
 use strict;
 use Daemon::Control;
@@ -11,7 +11,7 @@ exit Daemon::Control->new(
     lsb_desc    => 'Takes api-m messages and logs them to mongo.',
     path        => '/etc/init.d/apim-harvester',
  
-    program     => '/root/perl/apim-harvester.pl',
+    program     => '/home/hudakr4/git/phaidra-agents/apim-harvester/apim-harvester.pl',
   #  program_args => [ '--debug' ], for debugging the harvester
  
     pid_file    => '/tmp/apim-harvester.pid',
