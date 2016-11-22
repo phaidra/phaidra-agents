@@ -9,14 +9,14 @@ exit Daemon::Control->new(
     lsb_stop    => '$syslog',
     lsb_sdesc   => 'Phaidra agent: api-m message logger',
     lsb_desc    => 'Takes api-m messages and logs them to mongo.',
-    path        => '/usr/local/fedora/phaidra-agents/apim-harvester/apim-harvester',
+    path        => '/usr/local/phaidra/phaidra-agents/apim-harvester/apim-harvester',
  
-    program     => '/usr/local/fedora/phaidra-agents/apim-harvester/apim-harvester.pl',
+    program     => '/usr/local/phaidra/phaidra-agents/apim-harvester/apim-harvester.pl',
   #  program_args => [ '--debug' ], for debugging the harvester
  
-    pid_file    => '/usr/local/fedora/phaidra-agents/apim-harvester/apim-harvester.pid',
-    stderr_file => '/var/log/phaidra/apim-harvester.out',
-    stdout_file => '/var/log/phaidra/apim-harvester.out',
+    pid_file    => '/usr/local/phaidra/phaidra-agents/apim-harvester/apim-harvester.pid',
+    stderr_file => '/usr/local/phaidra/logs/apim-harvester.log',
+    stdout_file => '/usr/local/phaidra/logs/apim-harvester.log',
  
     fork        => 2,
  
