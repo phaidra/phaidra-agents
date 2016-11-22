@@ -30,6 +30,17 @@ apimharvester:
  access_topic: 'fedora.apim.access'
 ```
 
+Create capped mongodb collection...
+```
+db.createCollection( "apim", { capped: true, size: 1000000 } )
+```
+
+...or convert a created one to capped.
+```
+db.runCommand({"convertToCapped": "apim", size: 1000000});
+```
+
+
 ## Run
 
 ```bash
