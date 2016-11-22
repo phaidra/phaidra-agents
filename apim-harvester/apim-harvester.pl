@@ -19,10 +19,11 @@ use JSON::XS;
 use YAML::Syck;
 use MongoDB;
 use Data::Dumper;
-use Log::Log4perl;
+use Log::Log4perl qw(:easy);
 
 my $config = YAML::Syck::LoadFile('/etc/phaidra.yml');
-Log::Log4perl->init_once("/etc/phaidra_logging.conf");
+
+Log::Log4perl->easy_init( { level => $DEBUG, file => ">>/usr/local/phaidra/logs/apim-harvester.log" } );
 
 =head2 configuration, put onto the end of phaidra.yml
 apimharvester:
@@ -46,17 +47,18 @@ apimharvester:
 
 my $log = Log::Log4perl->get_logger("Phaidra::Apimharvester");
 
-=cut
+
 my $uri = "mongodb://".$config->{apimharvester}->{mongo_user}.":".$config->{apimharvester}->{mongo_password}."@". $config->{apimharvester}->{mongo_host}."/".$config->{apimharvester}->{mongo_db};
 my $client = MongoDB->connect($uri);
-=cut
+
 
 =cut
-  MongoDB::MongoClient->new( "host" =>
+my $client = MongoDB::MongoClient->new( "host" =>
 "mongodb://$config->{'apimharvester'}->{'mongo_user'}:$config->{'apimharvester'}->{'mongo_password'}\@$config->{'apimharvester'}->{'mongo_host'}\/$config->{'apimharvester'}->{'mongo_db'}"
   );
 =cut
 
+=cut
 my $client = MongoDB::Connection->new(
   host => $config->{apimharvester}->{mongo_host}, 
   port => "27017",
@@ -64,6 +66,7 @@ my $client = MongoDB::Connection->new(
   password => $config->{apimharvester}->{mongo_password},
   db_name => $config->{apimharvester}->{mongo_db}
 );
+=cut
 
 my $db = $client->get_database( $config->{'apimharvester'}->{'mongo_db'} );
 my $messages =
