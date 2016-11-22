@@ -73,8 +73,8 @@ my $messages =
   $db->get_collection( $config->{'apimharvester'}->{'mongo_collection'} );
 
 # store the frame bodies here for debugging before trying to put into Mongo
-my $debug_file = 'debug.txt';
-open my $fh, '>>', $debug_file;
+#my $debug_file = 'debug.txt';
+#open my $fh, '>>', $debug_file;
 
 # set up connection to activemq on default port for non-ssl stomp
 my $stomp = Net::Stomp->new(
