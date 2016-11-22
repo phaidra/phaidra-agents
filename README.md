@@ -3,15 +3,18 @@ Agents using Phaidra's agent framework
 
 # apim-harvester
 
-## Prerequisities
+## Install
 
+```bash
   cpanm Daemon::Control
   cpanm Net::Stomp
   cpanm XML::XML2JSON
   cpanm JSON::XS
+```
 
 ## Config (/etc/phaidra.yml)
 
+```yml
 apimharvester:
  stomp_host: 'localhost'
  stomp_port: 61613
@@ -22,11 +25,14 @@ apimharvester:
  mongo_password: 'pass'
  mongo_port: 27017
  mongo_db:  'instancedb'
- mongo_collection: 'apim'
+ mongo_collection: 'apim' 
  update_topic: 'fedora.apim.update'
  access_topic: 'fedora.apim.access'
+```
 
 ## Run
 
+```bash
 ./apim-daemon.pl start
+```
 
