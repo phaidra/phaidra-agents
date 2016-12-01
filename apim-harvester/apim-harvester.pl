@@ -23,7 +23,7 @@ use Log::Log4perl qw(:easy);
 
 my $config = YAML::Syck::LoadFile('/etc/phaidra.yml');
 
-Log::Log4perl->easy_init( { level => $DEBUG, file => ">>/usr/local/phaidra/logs/apim-harvester.log" } );
+Log::Log4perl->easy_init( { level => $DEBUG, file => ">>/var/log/phaidra/apim-harvester.log" } );
 
 =head2 configuration, put onto the end of phaidra.yml
 apimharvester:
@@ -110,10 +110,29 @@ while (1) {
     my $converter = XML::XML2JSON->new( 'force_array' => 1 );
     my $json = $converter->convert( $frame->body );
     my $decoded = JSON::XS::decode_json($json);    
-    $log->debug( $frame->body );
-    my $id = $messages->insert( { 'data' => $decoded } );
-    my $x = Dumper $json;
-    $log->debug( "mongo id is:" . $id . " json is:" . $x );
+    #$log->debug( $frame->body );
+
+    my $pid = $decoded->{entry}->{summary}[0]->{'$t'};
+    my $event = $decoded->{entry}->{title}[0]->{'$t'};
+    my $ds;
+    my $catsize = scalar @{$decoded->{entry}->{category}};
+    if($catsize > 2){
+      if($decoded->{entry}->{category}[1]->{'@scheme'} eq 'fedora-types:dsID'){
+        $ds = $decoded->{entry}->{category}[1]->{'@term'};
+      }
+    }
+    my $message = { 
+      'data' => $decoded, 
+      'e' => time, 
+      'pid' => $pid, 
+      'event' => $event      
+    };
+    if($ds){
+      $message->{ds} = $ds;
+    }
+    my $id = $messages->insert($message);
+    #my $x = Dumper $json;
+    #$log->debug( "mongo id is:" . $id . " json is:" . $x );
     $stomp->ack( { frame => $frame } );
 
 }
