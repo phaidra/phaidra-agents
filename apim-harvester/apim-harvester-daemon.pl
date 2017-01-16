@@ -15,8 +15,8 @@ exit Daemon::Control->new(
   #  program_args => [ '--debug' ], for debugging the harvester
  
     pid_file    => '/usr/local/phaidra/phaidra-agents/apim-harvester/apim-harvester.pid',
-    stderr_file => '/var/log/phaidra/apim-harvester.log',
-    stdout_file => '/var/log/phaidra/apim-harvester.log',
+    stderr_file => '/var/log/phaidra/apim-harvester-daemon.log',
+    stdout_file => '/var/log/phaidra/apim-harvester-daemon.log',
  
     fork        => 2,
  

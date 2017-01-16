@@ -34,6 +34,8 @@ while (defined (my $arg = shift (@ARGV)))
 #my $config = YAML::Syck::LoadFile('/etc/phaidra.yml');
 my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 
+my $sleep = exists $config->{dcupdater}->{sleep} ? $config->{dcupdater}->{sleep} : 5;
+
 my $mongouri;
 if($config->{dcupdater}->{mongo_user}){
   $mongouri = "mongodb://".$config->{dcupdater}->{mongo_user}.":".$config->{dcupdater}->{mongo_password}."@". $config->{dcupdater}->{mongo_host}."/".$config->{dcupdater}->{mongo_db};
@@ -62,12 +64,12 @@ my $db = $client->get_database( $config->{'dcupdater'}->{'mongo_db'} );
 my $col = $db->get_collection( $config->{'dcupdater'}->{'mongo_collection'} );
 
 my $ua = Mojo::UserAgent->new;
-my $dcurl = "https://".$config->{dcupdater}->{phaidraapi_adminusername}.":".$config->{dcupdater}->{phaidraapi_adminpassword}."\@".$config->{dcupdater}->{phaidraapi_apibaseurl}."/utils";
+my $apiurl = "https://".$config->{dcupdater}->{phaidraapi_adminusername}.":".$config->{dcupdater}->{phaidraapi_adminpassword}."\@".$config->{dcupdater}->{phaidraapi_apibaseurl};
 
 my $cnt = 0;
 while (1) {
 
-    DEBUG("checking updated documents since $last_check [".(localtime $last_check)."]");
+    DEBUG("checking since $last_check [".(localtime $last_check)."]");
     
     # in case the find will take too long, take the timestemp before
     my $ts = time;
@@ -78,43 +80,33 @@ while (1) {
 
       while (my @b = $updated->batch) {
 
-        # Remove duplicate pids. On object creation there are X datastreams updates,
-        # we don't need to update objects X times.
-        # Also, some apim accesses are not updates (like getDatastream or getObjectXML)
+        # Remove duplicate pids
         my %do_pids;
-        for my $d (@b){
-          if ($d->{event} eq 'getDatastream' || $d->{event} eq 'getObjectXML'){
-            DEBUG("skipping ".$d->{event}." of ".$d->{pid});
-            next;
-          }
+        for my $d (@b){          
           if (
-            ($d->{event} eq 'modifyDatastreamByValue' || $d->{event} eq 'addDatastream' )
-            &&
-            ($d->{ds} eq 'DC' || $d->{ds} eq 'DC_OAI' || $d->{ds} eq 'DC_P')
+            ($d->{event} eq 'modifyDatastreamByValue' || $d->{event} eq 'addDatastream' ) 
+            && (($d->{ds} eq 'UWMETADATA') || ($d->{ds} eq 'GEO'))
           ){
-            DEBUG("skipping ".$d->{event}." on ".$d->{ds}." of ". $d->{pid});
-            next;
-          }
-          $do_pids{$d->{pid}} = 1;
+            $do_pids{$d->{pid}} = 1;
+          }          
         }
 
         for my $d (keys %do_pids){     
-          INFO("updating $dcurl/$d/update_dc");
-          my $tx = $ua->post( "$dcurl/$d/update_dc" );
+          DEBUG("updating pid[$d]");
+          my $tx = $ua->post( "$apiurl/object/$d/dc" );
 
           if (my $res = $tx->success) {
-            INFO("update successful ".Dumper($res->json));
+            INFO("updated pid[$d]");
           }else {
             my ($err, $code) = $tx->error;
-            ERROR("update failed ".Dumper($err));
+            ERROR("updating pid[$d] failed ".Dumper($err));
           }
         }
 
       }
 
     }else{
-      INFO("no updates, sleeping...");
-      sleep(5);
+      sleep($sleep);
     }
 
 }

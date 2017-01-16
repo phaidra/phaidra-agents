@@ -34,6 +34,8 @@ while (defined (my $arg = shift (@ARGV)))
 #my $config = YAML::Syck::LoadFile('/etc/phaidra.yml');
 my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 
+my $sleep = exists $config->{solrupdater}->{sleep} ? $config->{solrupdater}->{sleep} : 5;
+
 my $mongouri;
 if($config->{solrupdater}->{mongo_user}){
   $mongouri = "mongodb://".$config->{solrupdater}->{mongo_user}.":".$config->{solrupdater}->{mongo_password}."@". $config->{solrupdater}->{mongo_host}."/".$config->{solrupdater}->{mongo_db};
@@ -67,38 +69,38 @@ my $solrurl = $config->{solrupdater}->{solr_scheme}."://".$config->{solrupdater}
 my $cnt = 0;
 while (1) {
 
-    DEBUG("checking updated documents since $last_check [".(localtime $last_check)."]");
+    DEBUG("checking since $last_check [".(localtime $last_check)."]");
     
     # in case the find will take too long, take the timestemp before
     my $ts = time;
-    my $updated = $col->find({'updated' => { '$gte' => $last_check }}, { 'batchSize' => 100 });    
+    my $updated = $col->find({'_updated' => { '$gte' => $last_check }}, { 'batchSize' => 100 });    
     $last_check = $ts;
 
     if($updated->has_next){    
 
       while (my @b = $updated->batch) {          
-        INFO("sending update batch of ".(0+@b)." documents...");
-
+        
+        my @pids;
         for my $d (@b){
           $d->{_id} = scalar $d->{_id};
+          push @pids, $d->{pid};
         }
 
-        DEBUG(Dumper(\@b));
+        DEBUG("updating ".(0+@b)." docs\n".Dumper(\@pids));
 
         # send bulk update to solr
         my $tx = $ua->post( $solrurl => json => \@b );  
 
         if (my $res = $tx->success) {
-          INFO("update successful ".Dumper($res->json));
+          INFO("updated\n".Dumper(\@pids));
         }else {
           my ($err, $code) = $tx->error;
-          ERROR("update failed ".Dumper($err));              
+          ERROR("updating\n".Dumper(\@pids)."\nfailed ".Dumper($err));              
         }         
       }
 
     }else{
-      INFO("no updates, sleeping...");
-      sleep(5);
+      sleep($sleep);
     }
     
 

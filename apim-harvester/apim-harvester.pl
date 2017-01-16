@@ -45,12 +45,8 @@ apimharvester:
 #      "mongodb://username:pass\@host\/db" );
 # one in the doc, doesn't seem to work?
 
-my $log = Log::Log4perl->get_logger("Phaidra::Apimharvester");
-
-
 my $uri = "mongodb://".$config->{apimharvester}->{mongo_user}.":".$config->{apimharvester}->{mongo_password}."@". $config->{apimharvester}->{mongo_host}."/".$config->{apimharvester}->{mongo_db};
 my $client = MongoDB->connect($uri);
-
 
 =cut
 my $client = MongoDB::MongoClient->new( "host" =>
@@ -69,8 +65,7 @@ my $client = MongoDB::Connection->new(
 =cut
 
 my $db = $client->get_database( $config->{'apimharvester'}->{'mongo_db'} );
-my $messages =
-  $db->get_collection( $config->{'apimharvester'}->{'mongo_collection'} );
+my $messages = $db->get_collection( $config->{'apimharvester'}->{'mongo_collection'} );
 
 # store the frame bodies here for debugging before trying to put into Mongo
 #my $debug_file = 'debug.txt';
@@ -121,18 +116,22 @@ while (1) {
         $ds = $decoded->{entry}->{category}[1]->{'@term'};
       }
     }
+    my $e = time;
     my $message = { 
       'data' => $decoded, 
-      'e' => time, 
+      'e' => $e, 
       'pid' => $pid, 
       'event' => $event      
     };
+    my $str = "pid[$pid] event[$event] e[$e]";
     if($ds){
       $message->{ds} = $ds;
+      $str .= " ds[$ds]";
     }
+    DEBUG("saving $str");
     my $id = $messages->insert($message);
-    #my $x = Dumper $json;
-    #$log->debug( "mongo id is:" . $id . " json is:" . $x );
+
+    INFO("saved $str id[$id]");
     $stomp->ack( { frame => $frame } );
 
 }

@@ -34,6 +34,8 @@ while (defined (my $arg = shift (@ARGV)))
 #my $config = YAML::Syck::LoadFile('/etc/phaidra.yml');
 my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 
+my $sleep = exists $config->{indexupdater}->{sleep} ? $config->{indexupdater}->{sleep} : 5;
+
 my $mongouri;
 if($config->{indexupdater}->{mongo_user}){
   $mongouri = "mongodb://".$config->{indexupdater}->{mongo_user}.":".$config->{indexupdater}->{mongo_password}."@". $config->{indexupdater}->{mongo_host}."/".$config->{indexupdater}->{mongo_db};
@@ -62,12 +64,12 @@ my $db = $client->get_database( $config->{'indexupdater'}->{'mongo_db'} );
 my $col = $db->get_collection( $config->{'indexupdater'}->{'mongo_collection'} );
 
 my $ua = Mojo::UserAgent->new;
-my $indexurl = "https://".$config->{indexupdater}->{phaidraapi_adminusername}.":".$config->{indexupdater}->{phaidraapi_adminpassword}."\@".$config->{indexupdater}->{phaidraapi_apibaseurl}."/utils";
+my $apiurl = "https://".$config->{indexupdater}->{phaidraapi_adminusername}.":".$config->{indexupdater}->{phaidraapi_adminpassword}."\@".$config->{indexupdater}->{phaidraapi_apibaseurl};
 
 my $cnt = 0;
 while (1) {
 
-    DEBUG("checking updated documents since $last_check [".(localtime $last_check)."]");
+    DEBUG("checking since $last_check [".(localtime $last_check)."]");
     
     # in case the find will take too long, take the timestemp before
     my $ts = time;
@@ -78,32 +80,33 @@ while (1) {
 
       while (my @b = $updated->batch) {
 
-        # Remove duplicate pids. On object creation there are X datastreams updates,
-        # we don't need to reindex it X times.
-        # Also, some apim accesses are not updates (like getDatastream or getObjectXML)
+        # Only update on DC_P. We'll act as if DC_P is updated iif something interesting happens to the object
         my %do_pids;
-        for my $d (@b){
-          next if ($d->{event} eq 'getDatastream' || $d->{event} eq 'getObjectXML');
-          $do_pids{$d->{pid}} = 1;
+        for my $d (@b){          
+          if (
+            ($d->{event} eq 'modifyDatastreamByValue' || $d->{event} eq 'addDatastream' ) 
+            && (($d->{ds} eq 'DC_P'))
+          ){
+            $do_pids{$d->{pid}} = 1;
+          }          
         }
 
         for my $d (keys %do_pids){     
-          INFO("updating $indexurl/$d/update_index");
-          my $tx = $ua->post( "$indexurl/$d/update_index" );
+          INFO("updating pid[$d]");
+          my $tx = $ua->post( "$apiurl/object/$d/index" );
 
           if (my $res = $tx->success) {
-            INFO("update successful ".Dumper($res->json));
+            INFO("updated pid[$d]");
           }else {
             my ($err, $code) = $tx->error;
-            ERROR("update failed ".Dumper($err));
+            ERROR("updating pid[$d] failed ".Dumper($err));
           }
         }
 
       }
 
     }else{
-      INFO("no updates, sleeping...");
-      sleep(5);
+      sleep($sleep);
     }
 
 }
