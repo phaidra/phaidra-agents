@@ -11,10 +11,6 @@ Periodically checks MongoDB for updated index entries and sends them to Solr.
 
 =cut
 
-use Net::Stomp;
-use XML::XML2JSON;
-use JSON::XS;
-use YAML::Syck;
 use MongoDB;
 use Mojo::UserAgent;
 use Mojo::JSON 'from_json';
@@ -31,7 +27,6 @@ while (defined (my $arg = shift (@ARGV)))
   $last_check = shift (@ARGV) if $arg eq '-since';  
 }
 
-#my $config = YAML::Syck::LoadFile('/etc/phaidra.yml');
 my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 
 my $sleep = exists $config->{solrupdater}->{sleep} ? $config->{solrupdater}->{sleep} : 5;
