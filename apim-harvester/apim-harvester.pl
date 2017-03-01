@@ -16,30 +16,15 @@ it only has api-m records at the moment.
 use Net::Stomp;
 use XML::XML2JSON;
 use JSON::XS;
-use YAML::Syck;
+use Mojo::JSON 'from_json';
+use Mojo::Util 'slurp';
 use MongoDB;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
 
-my $config = YAML::Syck::LoadFile('/etc/phaidra.yml');
-
 Log::Log4perl->easy_init( { level => $DEBUG, file => ">>/var/log/phaidra/apim-harvester.log" } );
 
-=head2 configuration, put onto the end of phaidra.yml
-apimharvester:
-   stomp_host: 'localhost.localdomain'
-   stomp_port: 61613
-   stomp_user: 'not used at present'
-   stomp_password: 'not used at present'
-   mongo_host: 'host'
-   mongo_user: 'user'
-   mongo_password: 'secret'
-   mongo_port: 27017 # not needed, if standard 27017
-   mongo_db:  'db'
-   mongo_collection: 'apim'
-   update_topic: 'fedora.apim.update'
-   access_topic: 'fedora.apim.access'
-=cut
+my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 
 # format is: my $client = MongoDB::MongoClient->new( "host" =>
 #      "mongodb://username:pass\@host\/db" );
@@ -129,7 +114,7 @@ while (1) {
       $str .= " ds[$ds]";
     }
     DEBUG("saving $str");
-    my $id = $messages->insert($message);
+    my $id = $messages->insert_one($message);
 
     INFO("saved $str id[$id]");
     $stomp->ack( { frame => $frame } );

@@ -1,4 +1,47 @@
 {
+
+   "apimharvester": {
+      "stomp_host": "localhost.localdomain",
+      "stomp_port": "61613",
+      "stomp_user": "not used at present",
+      "stomp_password": "not used at present",
+      "mongo_host": "host",
+      "mongo_user": "user",
+      "mongo_password": "pass",
+      "mongo_port": "27017",
+      "mongo_db": "db",
+      "mongo_collection": "collection",
+      "update_topic": "fedora.apim.update",
+      "access_topic": "fedora.apim.access"
+   },
+
+   "apimhooks": {
+      "stomp_host": "localhost.localdomain",
+      "stomp_port": "61613",
+      "stomp_user": "not used at present",
+      "stomp_password": "not used at present",
+      "update_topic": "fedora.apim.update",
+      "access_topic": "fedora.apim.access",
+
+      "mongo_host": "host",
+      "mongo_user": "user",
+      "mongo_password": "pass",
+      "mongo_port": "27017",
+      "mongo_db":  "db",
+      "mongo_collection": "index"
+
+      "solr_scheme": "http",
+      "solr_host": "host",
+      "solr_port": "8983",
+      "solr_core": "core",
+      "solr_user": "user",
+      "solr_password": "pass",
+
+      "phaidraapi_baseurl": "apiurl",      
+      "phaidraapi_adminusername": "username",
+      "phaidraapi_adminpassword": "pass"
+   },
+
 	"solrupdater": {
 		"solr_scheme": "http",
 		"solr_host": "host",
