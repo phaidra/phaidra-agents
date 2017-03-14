@@ -91,12 +91,17 @@ while (1) {
       INFO("index updated pid[$pid]");
 
       my $index = $res->json->{result}->{index};
-      my $tx = $ua->post( $solrurl => json => $index );  
-      if (my $res = $tx->success) {
-        INFO("solr updated pid[$pid]");
-      }else {
-        ERROR("updating solr pid[$pid] failed ".Dumper($tx->error));              
-      }  
+
+      if($res->json->{result}->{index}->{cmodel} ne 'Page'){
+        my $tx = $ua->post( $solrurl => json => $index );  
+        if (my $res = $tx->success) {
+          INFO("solr updated pid[$pid]");
+        }else {
+          ERROR("updating solr pid[$pid] failed ".Dumper($tx->error));              
+        }  
+      }else{
+        DEBUG("skipping solr update for Page pid[$pid]");
+      }
 
     }else {
       ERROR("updating index pid[$pid] failed ".Dumper($tx->error));
