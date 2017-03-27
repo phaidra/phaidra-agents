@@ -59,7 +59,7 @@ my $db = $client->get_database( $config->{'solrupdater'}->{'mongo_db'} );
 my $col = $db->get_collection( $config->{'solrupdater'}->{'mongo_collection'} );
 
 my $ua = Mojo::UserAgent->new;
-my $solrurl = $config->{solrupdater}->{solr_scheme}."://".$config->{solrupdater}->{solr_host}.":".$config->{solrupdater}->{solr_port}."/solr/".$config->{solrupdater}->{solr_core}."/update/json/docs?commit=true";
+my $solrurl = $config->{solrupdater}->{solr_scheme}."://".$config->{apimhooks}->{solr_user}.":".$config->{apimhooks}->{solr_password}."@".$config->{solrupdater}->{solr_host}.":".$config->{solrupdater}->{solr_port}."/solr/".$config->{solrupdater}->{solr_core}."/update/json/docs?commit=true";
 
 my $cnt = 0;
 while (1) {

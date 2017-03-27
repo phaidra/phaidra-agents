@@ -25,7 +25,7 @@ my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.j
 
 my $ua = Mojo::UserAgent->new;
 my $apiurl = "https://".$config->{apimhooks}->{phaidraapi_adminusername}.":".$config->{apimhooks}->{phaidraapi_adminpassword}."\@".$config->{apimhooks}->{phaidraapi_apibaseurl};
-my $solrurl = $config->{apimhooks}->{solr_scheme}."://".$config->{apimhooks}->{solr_host}.":".$config->{apimhooks}->{solr_port}."/solr/".$config->{apimhooks}->{solr_core}."/update/json/docs?commit=true";
+my $solrurl = $config->{apimhooks}->{solr_scheme}."://".$config->{apimhooks}->{solr_user}.":".$config->{apimhooks}->{solr_password}."@".$config->{apimhooks}->{solr_host}.":".$config->{apimhooks}->{solr_port}."/solr/".$config->{apimhooks}->{solr_core}."/update/json/docs?commit=true";
 
 # set up connection to activemq on default port for non-ssl stomp
 my $stomp = Net::Stomp->new(
