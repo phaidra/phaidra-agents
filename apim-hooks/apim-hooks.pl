@@ -30,8 +30,8 @@ my $solrurl = $config->{apimhooks}->{solr_scheme}."://".$config->{apimhooks}->{s
 # set up connection to activemq on default port for non-ssl stomp
 my $stomp = Net::Stomp->new(
     {
-        hostname => $config->{'apimharvester'}->{'stomp_host'},
-        port     => $config->{'apimharvester'}->{'stomp_port'}
+        hostname => $config->{'apimhooks'}->{'stomp_host'},
+        port     => $config->{'apimhooks'}->{'stomp_port'}
     }
 );
 $stomp->connect();
@@ -42,13 +42,13 @@ $stomp->connect();
 my $return_code;
 $return_code = $stomp->subscribe(
     {
-        'destination' => "/topic/$config->{'apimharvester'}->{'update_topic'}",
+        'destination' => "/topic/$config->{'apimhooks'}->{'update_topic'}",
         'ack'         => 'client',
     }
 );
 $return_code = $stomp->subscribe(
     {
-        'destination' => "/topic/$config->{'apimharvester'}->{'access_topic'}",
+        'destination' => "/topic/$config->{'apimhooks'}->{'access_topic'}",
         'ack'         => 'client',
     }
 );
