@@ -126,13 +126,6 @@ while (1) {
     
     DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds]");
 
-    $tx = $ua->post("$apiurl/object/$pid/dc");
-    if (my $res = $tx->success) {
-      INFO("dc updated pid[$pid]");
-    }else {
-      ERROR("updating dc pid[$pid] failed ".Dumper($tx->error));
-    }
-
     $tx = $ua->post("$apiurl/object/$pid/index");
     if (my $res = $tx->success) {
 
