@@ -23,20 +23,6 @@
       "update_topic": "fedora.apim.update",
       "access_topic": "fedora.apim.access",
 
-      "mongo_host": "host",
-      "mongo_user": "user",
-      "mongo_password": "pass",
-      "mongo_port": "27017",
-      "mongo_db":  "db",
-      "mongo_collection": "index"
-
-      "solr_scheme": "http",
-      "solr_host": "host",
-      "solr_port": "8983",
-      "solr_core": "core",
-      "solr_user": "user",
-      "solr_password": "pass",
-
       "phaidraapi_baseurl": "apiurl",      
       "phaidraapi_adminusername": "username",
       "phaidraapi_adminpassword": "pass"

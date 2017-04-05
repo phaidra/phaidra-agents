@@ -25,7 +25,6 @@ my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.j
 
 my $ua = Mojo::UserAgent->new;
 my $apiurl = "https://".$config->{apimhooks}->{phaidraapi_adminusername}.":".$config->{apimhooks}->{phaidraapi_adminpassword}."\@".$config->{apimhooks}->{phaidraapi_apibaseurl};
-my $solrurl = $config->{apimhooks}->{solr_scheme}."://".$config->{apimhooks}->{solr_user}.":".$config->{apimhooks}->{solr_password}."@".$config->{apimhooks}->{solr_host}.":".$config->{apimhooks}->{solr_port}."/solr/".$config->{apimhooks}->{solr_core}."/update/json/docs?commit=true";
 
 # set up connection to activemq on default port for non-ssl stomp
 my $stomp = Net::Stomp->new(
@@ -73,79 +72,14 @@ while (1) {
       $ds = $decoded->{entry}->{category}[1]->{'@term'};
     }
   }
-=cut
-  if((($event eq 'modifyDatastreamByValue') || ($event eq 'addDatastream')) && ($ds eq 'RELS-EXT')){
-    
-    DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds]");
 
-    if($res->json->{result}->{index}->{cmodel} eq 'Collection'){
-
-      $tx = $ua->post("$apiurl/object/$pid/index");
-      if (my $res = $tx->success) {
-
-        INFO("index updated pid[$pid]");
-        
-        my $index = $res->json->{result}->{index};
-        my $members = $index->{haspart};
-       
-        my $tx = $ua->post( $solrurl => json => $index );  
-        if (my $res = $tx->success) {
-          INFO("solr updated pid[$pid]");
-        }else {
-          ERROR("updating solr pid[$pid] failed ".Dumper($tx->error));              
-        }  
-
-        INFO("members");
-        my $cnt = $members;
-        my $i = 0;
-        for my $m (@{$members}){
-          $i++;
-
-          my $update = (
-            pid => $m,
-            ispartof => { add => $pid }
-          );
-
-          my $tx = $ua->post( $solrurl => json => $update );  
-          if (my $res = $tx->success) {
-            INFO("[$i/$cnt] member index updated pid[$m]");
-          }else {
-            ERROR("[$i/$cnt] updating member index pid[$m] failed ".Dumper($tx->error));              
-          }
-          
-        }
-          
-      }
-
-    }else {
-      ERROR("updating index pid[$pid] failed ".Dumper($tx->error));
-    }
-  }
-=cut
   if((($event eq 'modifyDatastreamByValue') || ($event eq 'addDatastream')) && (($ds eq 'UWMETADATA') || ($ds eq 'MODS'))){
     
     DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds]");
 
     $tx = $ua->post("$apiurl/object/$pid/index");
     if (my $res = $tx->success) {
-
       INFO("index updated pid[$pid]");
-
-      my $index = $res->json->{result}->{index};
-
-      if($res->json->{result}->{index}->{cmodel} ne 'Page'){
-
-        my $tx = $ua->post( $solrurl => json => $index );  
-        if (my $res = $tx->success) {
-          INFO("solr updated pid[$pid]");
-        }else {
-          ERROR("updating solr pid[$pid] failed ".Dumper($tx->error));              
-        }  
-
-      }else{
-        DEBUG("skipping solr update for Page pid[$pid]");
-      }
-
     }else {
       ERROR("updating index pid[$pid] failed ".Dumper($tx->error));
     }
