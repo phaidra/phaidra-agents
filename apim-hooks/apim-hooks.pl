@@ -66,16 +66,20 @@ while (1) {
   my $pid = $decoded->{entry}->{summary}[0]->{'$t'};
   my $event = $decoded->{entry}->{title}[0]->{'$t'};
   my $ds;
+  my $state;
   my $catsize = scalar @{$decoded->{entry}->{category}};
   if($catsize > 2){
     if($decoded->{entry}->{category}[1]->{'@scheme'} eq 'fedora-types:dsID'){
       $ds = $decoded->{entry}->{category}[1]->{'@term'};
     }
+    if($decoded->{entry}->{category}[1]->{'@scheme'} eq 'fedora-types:state'){
+      $state = $decoded->{entry}->{category}[1]->{'@term'};
+    }
   }
 
   if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue')) && (($ds eq 'UWMETADATA') || ($ds eq 'MODS'))){
     
-    DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds]".Dumper($decoded));
+    DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds] state[$state]");
 
     $tx = $ua->post("$apiurl/object/$pid/index");
     if (my $res = $tx->success) {
