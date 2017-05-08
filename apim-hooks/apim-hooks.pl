@@ -15,13 +15,14 @@ use XML::XML2JSON;
 use JSON::XS;
 use Mojo::UserAgent;
 use Mojo::JSON 'from_json';
-use Mojo::Util 'slurp';
+use Mojo::File;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
 
 Log::Log4perl->easy_init( { level => $DEBUG, file => ">>/var/log/phaidra/apim-hooks.log" } );
 
-my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
+my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
+my $config = from_json $configfilepath->slurp;
 
 my $ua = Mojo::UserAgent->new;
 my $apiurl = "https://".$config->{apimhooks}->{phaidraapi_adminusername}.":".$config->{apimhooks}->{phaidraapi_adminpassword}."\@".$config->{apimhooks}->{phaidraapi_apibaseurl};

@@ -25,7 +25,13 @@
 
       "phaidraapi_baseurl": "apiurl",      
       "phaidraapi_adminusername": "username",
-      "phaidraapi_adminpassword": "pass"
+      "phaidraapi_adminpassword": "pass",
+
+      "monitoring": {
+         "pidfile": "/usr/local/phaidra/phaidra-agents/apim-hooks/apim-hooks.pid",
+         "emailfrom": "admin.phaidra@univie.ac.at",
+	 "emailto": "admin.phaidra@univie.ac.at"
+      }
    },
 
 	"solrupdater": {
