@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # Very basic process check. Put to crontab.
-# eg */5 * * * *  cd /usr/local/phaidra/phaidra-agents/apim-hooks/ && ./apim-hooks-check.pl
+# eg */5 * * * * . $HOME/.bash_profile; cd /usr/local/phaidra/phaidra-agents/apim-hooks/ && ./apim-hooks-check.pl
 #
 
 use Mojo::File;
@@ -35,7 +35,7 @@ if($alive){
 
     my $msg = MIME::Lite->new(
 	  From     => $emailfrom,
-	  To       => $emailfrom,	  
+	  To       => $emailto,	  
 	  Type     => 'text/html',
 	  Subject  => "[$pid] apim-hooks not running",
 	  Data     => ""
