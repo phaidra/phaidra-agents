@@ -7,6 +7,7 @@
 use Mojo::File;
 use Mojo::JSON 'from_json';
 use MIME::Lite;
+use Sys::Hostname;
 
 my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 my $config = from_json $configfilepath->slurp;
@@ -25,19 +26,15 @@ if(-r $pidfile){
   $alive = (kill 0 => $pid);
 }
 
-if($alive){
+my $host = hostname;
 
-  print "[$pid] running\n";
-
-}else{
-
-  print "[$pid] not running\n";
+unless($alive){
 
     my $msg = MIME::Lite->new(
 	  From     => $emailfrom,
 	  To       => $emailto,	  
 	  Type     => 'text/html',
-	  Subject  => "[$pid] apim-hooks not running",
+	  Subject  => "host[$host] pid[$pid] apim-hooks not running",
 	  Data     => ""
     );
 
