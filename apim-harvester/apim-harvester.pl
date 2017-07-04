@@ -17,14 +17,15 @@ use Net::Stomp;
 use XML::XML2JSON;
 use JSON::XS;
 use Mojo::JSON 'from_json';
-use Mojo::Util 'slurp';
+use Mojo::File;
 use MongoDB;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
 
 Log::Log4perl->easy_init( { level => $DEBUG, file => ">>/var/log/phaidra/apim-harvester.log" } );
 
-my $config = from_json slurp('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
+my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
+my $config = from_json $configfilepath->slurp;
 
 # format is: my $client = MongoDB::MongoClient->new( "host" =>
 #      "mongodb://username:pass\@host\/db" );
