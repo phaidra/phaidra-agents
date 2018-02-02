@@ -11,7 +11,7 @@ my $config = from_json $configfilepath->slurp;
 my $pidfile = $config->{'apimhooks'}->{'monitoring'}->{pidfile};
 
 exit Daemon::Control->new(
-    name        => "ActiveMQ Message Logger",
+    name        => "apim-hooks daemon",
     lsb_start   => '$syslog $remote_fs',
     lsb_stop    => '$syslog',
     lsb_sdesc   => 'Phaidra agent',
