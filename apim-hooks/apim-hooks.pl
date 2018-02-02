@@ -25,7 +25,7 @@ my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-
 my $config = from_json $configfilepath->slurp;
 
 my $ua = Mojo::UserAgent->new;
-my $apiurl = "https://".$config->{apimhooks}->{phaidraapi_adminusername}.":".$config->{apimhooks}->{phaidraapi_adminpassword}."\@".$config->{apimhooks}->{phaidraapi_apibaseurl};
+my $apiurl = "https://".$config->{apimhooks}->{phaidraapi_adminusername}.":".$config->{apimhooks}->{phaidraapi_adminpassword}."\@".$config->{apimhooks}->{phaidraapi_baseurl};
 
 # set up connection to activemq on default port for non-ssl stomp
 my $stomp = Net::Stomp->new(
