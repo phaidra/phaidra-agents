@@ -19,7 +19,7 @@ use Mojo::File;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
 
-Log::Log4perl->easy_init( { level => $DEBUG, file => ">>/var/log/phaidra/apim-hooks.log" } );
+Log::Log4perl->easy_init( { level => $DEBUG, layout => "[%d] [%c] [%p] %m%n", file => ">>/var/log/phaidra/apim-hooks.log" } );
 
 my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 my $config = from_json $configfilepath->slurp;
