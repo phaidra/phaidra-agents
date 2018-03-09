@@ -83,7 +83,7 @@ while (1) {
     }
   }
 
-  if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue')) && (($ds eq 'UWMETADATA') || ($ds eq 'MODS'))){
+  if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue')) && (($ds eq 'UWMETADATA') || ($ds eq 'MODS')  || ($ds eq 'RIGHTS'))){
     
     DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds] state[$state]");
 
