@@ -85,6 +85,25 @@ while (1) {
 
   if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue') && (($ds eq 'UWMETADATA') || ($ds eq 'MODS') || ($ds eq 'RIGHTS'))) || (($event eq 'addDatastream') && ($ds eq 'RIGHTS'))){
     
+    if(exists($config->{apimhooks}->{create_imageserver_job}) && $config->{apimhooks}->{create_imageserver_job} eq 1){
+      if(($event eq 'modifyObject') && ($state eq 'A')){
+        # DEBUG(Dumper($decoded));
+        $tx = $ua->get("$apiurl/object/$pid/cmodel");
+        if (my $res = $tx->success) {
+          if($res->json->{cmodel} eq 'Picture'){
+            $tx = $ua->post("$apiurl/imageserver/$pid/process");
+            if (my $res = $tx->success) {
+              INFO("imageserver job created pid[$pid]");
+            }else {
+              ERROR("creating imageserver job for pid[$pid] failed ".Dumper($tx->error));
+            }
+          }
+        }else {
+          ERROR("getting cmodel of pid[$pid] ".Dumper($tx->error));
+        }
+      }
+    }
+
     DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds] state[$state]");
 
     $tx = $ua->post("$apiurl/object/$pid/index");
