@@ -138,9 +138,8 @@ while (1) {
     }
 
     if (exists($config->{apimhooks}->{oai_set_update_flag}) && $config->{apimhooks}->{oai_set_update_flag} eq 1 ) {
-      INFO("oai update flag set pid[$pid]");
       my $mdbres = $oaicoll->update_one({ pid => $pid }, { '$set' => { update => 1 }});
-      # DEBUG("mdbres: ".Dumper($mdbres->assert));
+      INFO("oai update flag pid[$pid] matched[".$mdbres->matched_count."]");
     }
 
   }
