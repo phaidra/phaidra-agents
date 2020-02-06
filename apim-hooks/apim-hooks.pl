@@ -18,10 +18,6 @@ use Mojo::JSON 'from_json';
 use Mojo::File;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
-# alternatively use MongoDB::Connection, if MongoDB::MongoClient is not available
-use MongoDB::MongoClient;
-# use MongoDB::Connection;
-use MongoDB;
 
 Log::Log4perl->easy_init( { level => $DEBUG, layout => "[%d] [%c] [%p] %m%n", file => ">>/var/log/phaidra/apim-hooks.log" } );
 
@@ -39,26 +35,6 @@ my $stomp = Net::Stomp->new(
   }
 );
 $stomp->connect();
-
-my $mdbcfg;
-my $mdbclient;
-my $mdb;
-my $oaicoll;
-if (exists($config->{apimhooks}->{oai_set_update_flag}) && ($config->{apimhooks}->{oai_set_update_flag} eq 1)) {
-  $mdbcfg = $config->{apimhooks}->{'apimongodb'};
-  ERROR('cfg not found') unless (defined ($mdbcfg));
-  my %connection_pars = map { $_ => $mdbcfg->{$_} } qw(host port username password db_name);
-  eval { $mdbclient= new MongoDB::MongoClient (%connection_pars); };
-  ### eval { $mdbclient = new MongoDB::Connection(%connection_pars); };
-  ERROR('MongoDB connection failed: ' . $@) if ($@);
-  ERROR('connection not established') unless (defined ($mdbclient));
-  eval { $mdb = $mdbclient->get_database($mdbcfg->{db_name}); };
-  ERROR('MongoDB get_database failed: ' . $@) if ($@);
-  ERROR('MongoDB db not available') unless (defined ($mdb));
-  eval { $oaicoll = $mdb->get_collection('oai_records'); };
-  ERROR('MongoDB get_collection failed: ' . $@) if ($@);
-  ERROR('MongoDB collection not available') unless (defined ($oaicoll));
-}
 
 # this will create the topics, as described in: https://wiki.duraspace.org/display/FEDORA34/Messaging
 # if they are not already created
@@ -135,11 +111,6 @@ while (1) {
       INFO("index updated pid[$pid]");
     }else {
       ERROR("updating index pid[$pid] failed ".Dumper($tx->error));
-    }
-
-    if (exists($config->{apimhooks}->{oai_set_update_flag}) && $config->{apimhooks}->{oai_set_update_flag} eq 1 ) {
-      my $mdbres = $oaicoll->update_one({ pid => $pid }, { '$set' => { update => 1 }});
-      INFO("oai update flag pid[$pid] matched[".$mdbres->matched_count."]");
     }
 
   }
