@@ -83,7 +83,7 @@ while (1) {
     }
   }
 
-  if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue') && (($ds eq 'UWMETADATA') || ($ds eq 'MODS') || ($ds eq 'RIGHTS') || ($ds eq 'JSON-LD'))) || (($event eq 'addDatastream') && ($ds eq 'RIGHTS'))){
+  if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue') && (($ds eq 'UWMETADATA') || ($ds eq 'MODS') || ($ds eq 'RIGHTS') || ($ds eq 'JSON-LD') || ($ds eq 'COLLECTIONORDER'))) || (($event eq 'addDatastream') && (($ds eq 'RIGHTS') || ($ds eq 'COLLECTIONORDER')))){
 
     DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds] state[$state]");
 
