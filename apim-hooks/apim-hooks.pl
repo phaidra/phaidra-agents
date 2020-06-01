@@ -29,10 +29,10 @@ my $apiurl = "https://".$config->{apimhooks}->{phaidraapi_adminusername}.":".$co
 
 # set up connection to activemq on default port for non-ssl stomp
 my $stomp = Net::Stomp->new(
-    {
-        hostname => $config->{'apimhooks'}->{'stomp_host'},
-        port     => $config->{'apimhooks'}->{'stomp_port'}
-    }
+  {
+    hostname => $config->{'apimhooks'}->{'stomp_host'},
+    port     => $config->{'apimhooks'}->{'stomp_port'}
+  }
 );
 $stomp->connect();
 
@@ -41,16 +41,16 @@ $stomp->connect();
 
 my $return_code;
 $return_code = $stomp->subscribe(
-    {
-        'destination' => "/topic/$config->{'apimhooks'}->{'update_topic'}",
-        'ack'         => 'client',
-    }
+  {
+    'destination' => "/topic/$config->{'apimhooks'}->{'update_topic'}",
+    'ack'         => 'client',
+  }
 );
 $return_code = $stomp->subscribe(
-    {
-        'destination' => "/topic/$config->{'apimhooks'}->{'access_topic'}",
-        'ack'         => 'client',
-    }
+  {
+    'destination' => "/topic/$config->{'apimhooks'}->{'access_topic'}",
+    'ack'         => 'client',
+  }
 );
 
 # receive frame, will block until there is a frame
@@ -63,8 +63,8 @@ while (1) {
   my $converter = XML::XML2JSON->new( 'force_array' => 1 );
   # this seems to be undefined sometimes
   unless($frame->body){
-     ERROR("caught empty message");
-     next;
+    ERROR("caught empty message");
+    next;
   }
   my $json = $converter->convert( $frame->body );
   my $decoded = JSON::XS::decode_json($json);    
@@ -83,8 +83,10 @@ while (1) {
     }
   }
 
-  if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue') && (($ds eq 'UWMETADATA') || ($ds eq 'MODS') || ($ds eq 'RIGHTS'))) || (($event eq 'addDatastream') && ($ds eq 'RIGHTS'))){
-    
+  if(($event eq 'modifyObject') || (($event eq 'modifyDatastreamByValue') && (($ds eq 'UWMETADATA') || ($ds eq 'MODS') || ($ds eq 'RIGHTS') || ($ds eq 'JSON-LD') || ($ds eq 'COLLECTIONORDER'))) || (($event eq 'addDatastream') && (($ds eq 'RIGHTS') || ($ds eq 'COLLECTIONORDER')))){
+
+    DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds] state[$state]");
+
     if(exists($config->{apimhooks}->{create_imageserver_job}) && $config->{apimhooks}->{create_imageserver_job} eq 1){
       if(($event eq 'modifyObject') && ($state eq 'A')){
         # DEBUG(Dumper($decoded));
@@ -103,8 +105,6 @@ while (1) {
         }
       }
     }
-
-    DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds] state[$state]");
 
     $tx = $ua->post("$apiurl/object/$pid/index");
     if (my $res = $tx->success) {
