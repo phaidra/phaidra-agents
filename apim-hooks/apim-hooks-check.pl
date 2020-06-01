@@ -12,9 +12,10 @@ use Sys::Hostname;
 my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 my $config = from_json $configfilepath->slurp;
 
-my $pidfile = $config->{'apimhooks'}->{'monitoring'}->{pidfile};
-my $emailfrom = $config->{'apimhooks'}->{'monitoring'}->{emailfrom};
-my $emailto = $config->{'apimhooks'}->{'monitoring'}->{emailto};
+my ($phaidraapi_baseurl, $monitoring)= map { $config->{apimhooks}->{$_} } qw(phaidraapi_baseurl monitoring);
+my ($pidfile, $emailfrom, $emailto)= map { $monitoring->{$_} } qw(pidfile emailfrom emailto);
+
+# print "url=[$phaidraapi_baseurl] emailfrom=[$emailfrom] emailto=[$emailto]\n";
 
 my $alive = undef;
 my $pid;
@@ -30,12 +31,13 @@ my $host = hostname;
 
 unless($alive){
 
+    my $pwd = `pwd`; chop($pwd);
     my $msg = MIME::Lite->new(
 	  From     => $emailfrom,
 	  To       => $emailto,	  
 	  Type     => 'text/html',
 	  Subject  => "host[$host] pid[$pid] apim-hooks not running",
-	  Data     => ""
+	  Data     => "Phaidra API-M hooks not running for $phaidraapi_baseurl; please go to $pwd and restart!"
     );
 
     $msg->send; 
