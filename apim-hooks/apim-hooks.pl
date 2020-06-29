@@ -60,7 +60,7 @@ while (1) {
 
   my $frame = $stomp->receive_frame;
 
-  my $converter = XML::XML2JSON->new( 'force_array' => 1 );
+  my $converter = XML::XML2JSON->new( 'force_array' => 1, 'module' => 'JSON::XS' );
   # this seems to be undefined sometimes
   unless($frame->body){
     ERROR("caught empty message");
