@@ -92,7 +92,8 @@ while (1) {
         # DEBUG(Dumper($decoded));
         $tx = $ua->get("$apiurl/object/$pid/cmodel");
         if (my $res = $tx->success) {
-          if($res->json->{cmodel} eq 'Picture' || $res->json->{cmodel} eq 'PDFDocument'){
+          INFO("pid[$pid] cmodel[".$res->json->{cmodel}."]");
+          if(($res->json->{cmodel} eq 'Picture') || ($res->json->{cmodel} eq 'PDFDocument')){
             $tx = $ua->post("$apiurl/imageserver/$pid/process");
             if (my $res = $tx->success) {
               INFO("imageserver job created pid[$pid]");
