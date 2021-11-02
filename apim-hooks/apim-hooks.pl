@@ -18,11 +18,31 @@ use Mojo::JSON 'from_json';
 use Mojo::File;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
+use MongoDB 1.8.3;
 
 Log::Log4perl->easy_init( { level => $DEBUG, layout => "[%d] [%c] [%p] %m%n", file => ">>/var/log/phaidra/apim-hooks.log" } );
 
+sub ts_iso {
+  my @ts = localtime (time());
+  sprintf ("%04d%02d%02dT%02d%02d%02d", $ts[5]+1900, $ts[4]+1, $ts[3], $ts[2], $ts[1], $ts[0]);
+}
+
 my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 my $config = from_json $configfilepath->slurp;
+
+my $irma_coll;
+if (exists($config->{apimhooks}->{irma_mongo})){
+  my $mdbcfg= $config->{apimhooks}->{irma_mongo};
+  my %connection_pars= map { $_ => $mdbcfg->{$_} } qw(host port username password database);
+  my $irma_mongo;
+  eval { $irma_mongo = new MongoDB::MongoClient (%connection_pars); };
+  if ($@) {
+    ERROR("error connecting to mongo: ".$@);
+    exit 1;
+  }
+  my $irma_db = $irma_mongo->get_database($mdbcfg->{database});
+  $irma_coll = $irma_db->get_collection('irma.map');
+}
 
 my $ua = Mojo::UserAgent->new;
 my $apiurl = "https://".$config->{apimhooks}->{phaidraapi_adminusername}.":".$config->{apimhooks}->{phaidraapi_adminpassword}."\@".$config->{apimhooks}->{phaidraapi_baseurl};
@@ -55,7 +75,6 @@ $return_code = $stomp->subscribe(
 
 # receive frame, will block until there is a frame
 INFO("started");
-my $tx;
 while (1) {
 
   my $frame = $stomp->receive_frame;
@@ -87,33 +106,55 @@ while (1) {
 
     DEBUG("catching pid[$pid] event[$event] e[".time."] ds[$ds] state[$state]");
 
-    if(exists($config->{apimhooks}->{create_imageserver_job}) && $config->{apimhooks}->{create_imageserver_job} eq 1){
-      if(($event eq 'modifyObject') && ($state eq 'A')){
-        # DEBUG(Dumper($decoded));
-        $tx = $ua->get("$apiurl/object/$pid/cmodel");
-        if (my $res = $tx->success) {
-          INFO("pid[$pid] cmodel[".$res->json->{cmodel}."]");
-          if(($res->json->{cmodel} eq 'Picture') || ($res->json->{cmodel} eq 'PDFDocument')){
-            $tx = $ua->post("$apiurl/imageserver/$pid/process");
-            if (my $res = $tx->success) {
+    if(($event eq 'modifyObject') && ($state eq 'A')){
+      # DEBUG(Dumper($decoded));
+
+      if(exists($config->{apimhooks}->{create_imageserver_job}) && $config->{apimhooks}->{create_imageserver_job} eq 1){
+        # if Picture or PDF, create imageserver job
+        my $cmres = $ua->get("$apiurl/object/$pid/cmodel")->result;
+        if ($cmres->is_success) {
+          INFO("pid[$pid] cmodel[".$cmres->json->{cmodel}."]");
+          if(($cmres->json->{cmodel} eq 'Picture') || ($cmres->json->{cmodel} eq 'PDFDocument')){
+            my $procres = $ua->post("$apiurl/imageserver/$pid/process")->result;
+            if ($procres->is_success) {
               INFO("imageserver job created pid[$pid]");
             }else {
-              ERROR("creating imageserver job for pid[$pid] failed ".Dumper($tx->error));
+              ERROR("creating imageserver job for pid[$pid] failed ".$procres->code." ".$procres->message);
             }
           }
         }else {
-          ERROR("getting cmodel of pid[$pid] ".Dumper($tx->error));
+          ERROR("getting cmodel of pid[$pid] ".$cmres->code." ".$cmres->message);
+        }
+      }
+
+      if(exists($config->{apimhooks}->{handle}) && ($config->{apimhooks}->{handle}->{create_handle} eq 1) && exists($config->{apimhooks}->{irma_mongo}) && $irma_coll){
+        # create handle
+        my $hdl = $config->{apimhooks}->{hdl_prefix}."/".$config->{apimhooks}->{instance_hdl_prefix}.".".$pid;
+        my $url = $config->{apimhooks}->{instance_url_prefix}.$pid;
+
+        my $found = $irma_coll->find_one({hdl => $hdl, url => $url});
+        if(defined($found) && exists($found->{hdl})){
+          INFO("[".scalar localtime."] ", "skipping, ".$found->{hdl}." already in irma.map"); 
+        }else{      
+          INFO("[".scalar localtime."] ", "inserting url=[$url] hdl=[$hdl]");
+          $irma_coll->insert(
+            {
+              ts_iso => ts_iso(), 
+              _created => time, 
+              hdl => $hdl,
+              url => $url
+            }
+          );
         }
       }
     }
 
-    $tx = $ua->post("$apiurl/object/$pid/index");
-    if (my $res = $tx->success) {
+    my $idxres = $ua->post("$apiurl/object/$pid/index")->result;
+    if ($idxres->is_success) {
       INFO("index updated pid[$pid]");
     }else {
-      ERROR("updating index pid[$pid] failed ".Dumper($tx->error));
+      ERROR("updating index pid[$pid] failed ".$idxres->code." ".$idxres->message);
     }
-
   }
 
   $stomp->ack( { frame => $frame } );
