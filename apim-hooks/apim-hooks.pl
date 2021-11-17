@@ -127,27 +127,37 @@ while (1) {
         }
       }
 
-      if(exists($config->{apimhooks}->{handle}) && ($config->{apimhooks}->{handle}->{create_handle} eq 1) && exists($config->{apimhooks}->{irma_mongo}) && $irma_coll){
+      if (exists($config->{apimhooks}->{handle}) && ($config->{apimhooks}->{handle}->{create_handle} eq 1) && exists($config->{apimhooks}->{irma_mongo}) && $irma_coll) {
         # create handle
-        my $hdl = $config->{apimhooks}->{hdl_prefix}."/".$config->{apimhooks}->{instance_hdl_prefix}.".".$pid;
-        my $url = $config->{apimhooks}->{instance_url_prefix}.$pid;
+        my ($pidnoprefix) = $pid =~ /o:(\d+)/;
+        my $hdl = $config->{apimhooks}->{handle}->{hdl_prefix}."/".$config->{apimhooks}->{handle}->{instance_hdl_prefix}.".".$pidnoprefix;
+        my $url = $config->{apimhooks}->{handle}->{instance_url_prefix}.$pid;
 
         my $found = $irma_coll->find_one({hdl => $hdl, url => $url});
-        if(defined($found) && exists($found->{hdl})){
-          INFO("[".scalar localtime."] ", "skipping, ".$found->{hdl}." already in irma.map"); 
-        }else{      
-          INFO("[".scalar localtime."] ", "inserting url=[$url] hdl=[$hdl]");
-          $irma_coll->insert(
-            {
-              ts_iso => ts_iso(), 
-              _created => time, 
-              hdl => $hdl,
-              url => $url
+        if (defined($found) && exists($found->{hdl})) {
+          INFO("skipping, ".$found->{hdl}." already in irma.map"); 
+        } else { 
+          # if not Page object, insert handle identifier
+          my $cmres = $ua->get("$apiurl/object/$pid/cmodel")->result;
+          if ($cmres->is_success) {
+            INFO("pid[$pid] cmodel[".$cmres->json->{cmodel}."]");
+            if ($cmres->json->{cmodel} && ($cmres->json->{cmodel} ne 'Page')) {
+              INFO("inserting url=[$url] hdl=[$hdl]");
+              $irma_coll->insert_one(
+                {
+                  ts_iso => ts_iso(),
+                  _created => time,
+                  _updated => time,
+                  hdl => $hdl,
+                  url => $url
+                }
+              );
             }
-          );
+          } else {
+            ERROR("getting cmodel of pid[$pid] ".$cmres->code." ".$cmres->message);
+          }
         }
       }
-    }
 
     my $idxres = $ua->post("$apiurl/object/$pid/index")->result;
     if ($idxres->is_success) {
