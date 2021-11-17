@@ -158,6 +158,7 @@ while (1) {
           }
         }
       }
+    }
 
     my $idxres = $ua->post("$apiurl/object/$pid/index")->result;
     if ($idxres->is_success) {
@@ -165,7 +166,7 @@ while (1) {
     }else {
       ERROR("updating index pid[$pid] failed ".$idxres->code." ".$idxres->message);
     }
-  }
+  }  
 
   $stomp->ack( { frame => $frame } );
 
