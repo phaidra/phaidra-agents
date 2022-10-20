@@ -44,6 +44,6 @@ db.runCommand({"convertToCapped": "apim", size: 1000000});
 ## Run
 
 ```bash
-./apim-daemon.pl start
+./apim-hooks-daemon.pl start
 ```
 
