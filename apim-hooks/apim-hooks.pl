@@ -27,6 +27,23 @@ sub ts_iso {
   sprintf ("%04d%02d%02dT%02d%02d%02d", $ts[5]+1900, $ts[4]+1, $ts[3], $ts[2], $ts[1], $ts[0]);
 }
 
+sub insert_handle {
+  my $irma_coll = shift;
+  my $hdl = shift;
+  my $url = shift;
+
+  INFO("inserting url=[$url] hdl=[$hdl]");
+  $irma_coll->insert_one(
+    {
+      ts_iso => ts_iso(),
+      _created => time,
+      _updated => time,
+      hdl => $hdl,
+      url => $url
+    }
+  );
+}
+
 my $configfilepath = Mojo::File->new('/usr/local/phaidra/phaidra-agents/phaidra-agents.json');
 my $config = from_json $configfilepath->slurp;
 
@@ -137,24 +154,23 @@ while (1) {
         if (defined($found) && exists($found->{hdl})) {
           INFO("skipping, ".$found->{hdl}." already in irma.map"); 
         } else { 
-          # if not Page object, insert handle identifier
-          my $cmres = $ua->get("$apiurl/object/$pid/cmodel")->result;
-          if ($cmres->is_success) {
-            INFO("pid[$pid] cmodel[".$cmres->json->{cmodel}."]");
-            if ($cmres->json->{cmodel} && ($cmres->json->{cmodel} ne 'Page')) {
-              INFO("inserting url=[$url] hdl=[$hdl]");
-              $irma_coll->insert_one(
-                {
-                  ts_iso => ts_iso(),
-                  _created => time,
-                  _updated => time,
-                  hdl => $hdl,
-                  url => $url
-                }
-              );
-            }
+          my $ignore_pages = '1';
+          if(exists($config->{apimhooks}->{handle}->{ignore_pages})) {
+            $ignore_pages = $config->{apimhooks}->{handle}->{ignore_pages};
+          }
+          if ($ignore_pages eq '0') {
+            insert_handle($irma_coll, $hdl, $url);
           } else {
-            ERROR("getting cmodel of pid[$pid] ".$cmres->code." ".$cmres->message);
+            # if not Page object, insert handle identifier
+            my $cmres = $ua->get("$apiurl/object/$pid/cmodel")->result;
+            if ($cmres->is_success) {
+              INFO("pid[$pid] cmodel[".$cmres->json->{cmodel}."]");
+              if ($cmres->json->{cmodel} && ($cmres->json->{cmodel} ne 'Page')) {
+                insert_handle($irma_coll, $hdl, $url);
+              }
+            } else {
+              ERROR("getting cmodel of pid[$pid] ".$cmres->code." ".$cmres->message);
+            }
           }
         }
       }

@@ -31,7 +31,21 @@
          "pidfile": "/usr/local/phaidra/phaidra-agents/apim-hooks/apim-hooks.pid",
          "emailfrom": "admin.phaidra@univie.ac.at",
 	 "emailto": "admin.phaidra@univie.ac.at"
-      }
+      },
+      "handle": {
+      "create_handle": "1",
+      "ignore_pages": "1",
+      "hdl_prefix": "",
+      "instance_hdl_prefix": "",
+      "instance_url_prefix": ""
+    },
+    "irma_mongo": {
+      "host": "",
+      "port": "",
+      "username": "",
+      "password": "",
+      "database": ""
+    }
    },
 
 	"solrupdater": {
