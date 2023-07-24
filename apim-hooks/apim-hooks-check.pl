@@ -53,7 +53,10 @@ unless($alive){
 
   if ($enablealert) # or option to send alerts via alertmanager activated
   {
-    my $alertmanager= new Net::Alertmanager (alertmanager => $config->{alertmanager});
+    my $acfg= (exists ($config->{alertmanager}))
+               ? $config->{alertmanager}   # where the config should be, logically
+	       : $config->{apimhooks}->{alertmanager}; # where the config is apparently
+    my $alertmanager= new Net::Alertmanager (alertmanager => $acfg);
 
     my $alert=
     {
