@@ -37,7 +37,7 @@ sub send_alerts
   my $alerts= shift;
 
   my $json= JSON::encode_json($alerts);
-  print __LINE__, " json=[$json]\n";
+  # print __LINE__, " json=[$json]\n";
 
   my $a= $self->{alertmanager} or die;
 
@@ -63,7 +63,7 @@ sub send_alerts
     $msg= $res->status_line;
   }
 
-  print __LINE__, " msg=[$msg]\n"; # content=[$content]\n";
+  # print __LINE__, " msg=[$msg]\n"; # content=[$content]\n";
   ($data, $msg);
 }
 
