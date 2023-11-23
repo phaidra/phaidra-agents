@@ -137,7 +137,7 @@ while (1) {
 
       if(exists($config->{apimhooks}->{create_imageserver_job}) && $config->{apimhooks}->{create_imageserver_job} eq 1){
         # if Picture or PDF, create imageserver job
-        if($cmodel && ($cmodel eq 'Picture') || ($cmodel eq 'PDFDocument')){
+        if($cmodel && (($cmodel eq 'Picture') || ($cmodel eq 'PDFDocument'))){
           my $procres = $ua->post("$apiurl/imageserver/$pid/process")->result;
           if ($procres->is_success) {
             INFO("imageserver job created pid[$pid]");
