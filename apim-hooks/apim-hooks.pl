@@ -6,7 +6,7 @@ apim-hooks.pl
 
 =head1 DESCRIPTION
 
-Listens for apim events and 1) updates DC 2) updates mongo index 3) updates solr index.
+Listens for apim events and 1) creates image server job if enabled 2) creates handle identifier if enabled 3) updates solr index.
 
 =cut
 
@@ -126,21 +126,24 @@ while (1) {
     if(($event eq 'modifyObject') && ($state eq 'A')){
       # DEBUG(Dumper($decoded));
 
+      my $cmodel;
+      my $cmres = $ua->get("$apiurl/object/$pid/cmodel")->result;
+      if ($cmres->is_success) {
+        $cmodel = $cmres->json->{cmodel};
+        INFO("pid[$pid] cmodel[".$cmodel."]");
+      }else {
+        ERROR("getting cmodel of pid[$pid] ".$cmres->code." ".$cmres->message);
+      }
+
       if(exists($config->{apimhooks}->{create_imageserver_job}) && $config->{apimhooks}->{create_imageserver_job} eq 1){
         # if Picture or PDF, create imageserver job
-        my $cmres = $ua->get("$apiurl/object/$pid/cmodel")->result;
-        if ($cmres->is_success) {
-          INFO("pid[$pid] cmodel[".$cmres->json->{cmodel}."]");
-          if(($cmres->json->{cmodel} eq 'Picture') || ($cmres->json->{cmodel} eq 'PDFDocument')){
-            my $procres = $ua->post("$apiurl/imageserver/$pid/process")->result;
-            if ($procres->is_success) {
-              INFO("imageserver job created pid[$pid]");
-            }else {
-              ERROR("creating imageserver job for pid[$pid] failed ".$procres->code." ".$procres->message);
-            }
+        if($cmodel && (($cmodel eq 'Picture') || ($cmodel eq 'PDFDocument'))){
+          my $procres = $ua->post("$apiurl/imageserver/$pid/process")->result;
+          if ($procres->is_success) {
+            INFO("imageserver job created pid[$pid]");
+          }else {
+            ERROR("creating imageserver job for pid[$pid] failed ".$procres->code." ".$procres->message);
           }
-        }else {
-          ERROR("getting cmodel of pid[$pid] ".$cmres->code." ".$cmres->message);
         }
       }
 
@@ -162,14 +165,8 @@ while (1) {
             insert_handle($irma_coll, $hdl, $url);
           } else {
             # if not Page object, insert handle identifier
-            my $cmres = $ua->get("$apiurl/object/$pid/cmodel")->result;
-            if ($cmres->is_success) {
-              INFO("pid[$pid] cmodel[".$cmres->json->{cmodel}."]");
-              if ($cmres->json->{cmodel} && ($cmres->json->{cmodel} ne 'Page')) {
-                insert_handle($irma_coll, $hdl, $url);
-              }
-            } else {
-              ERROR("getting cmodel of pid[$pid] ".$cmres->code." ".$cmres->message);
+            if ($cmodel && ($cmodel ne 'Page')) {
+              insert_handle($irma_coll, $hdl, $url);
             }
           }
         }
@@ -190,4 +187,3 @@ while (1) {
 
 $stomp->disconnect;
 exit 0;
-
