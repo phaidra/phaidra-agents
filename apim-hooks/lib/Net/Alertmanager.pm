@@ -55,7 +55,7 @@ sub send_alerts
     $msg= 'OK';
     $content= $res->content;
     $data= JSON::decode_json($content);
-    print __LINE__, " data: ", Dumper($data);
+    # print __LINE__, " data: ", Dumper($data);
   }
   else
   {
