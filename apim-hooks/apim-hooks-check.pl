@@ -66,6 +66,8 @@ unless($alive){
         severity => 'page',
         instance => 'apim-hooks-'.$instance,
         alertname => 'apim-hooks-down',
+	host => $host,
+	phaidraapi_baseurl => $phaidraapi_baseurl,
 
         # univie
         # alert => 'gg', # who should receive the alert; if not present, defaults will apply
