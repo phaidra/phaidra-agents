@@ -30,16 +30,20 @@ sub set
   $self;
 }
 
-
 sub send_alerts
 {
   my $self= shift;
   my $alerts= shift;
 
   my $json= JSON::encode_json($alerts);
-  # print __LINE__, " json=[$json]\n";
+  # print __FILE__, " ", __LINE__, " json=[$json]\n";
 
-  my $a= $self->{alertmanager} or die;
+  my $a= $self->{alertmanager};
+  unless ($a)
+  {
+    print STDERR " can't access alertmanager config!\n";
+    return ('MISSING_CONFIG', undef);
+  }
 
   my $req= new HTTP::Request(POST => $a->{url});
   $req->authorization_basic($a->{username}, $a->{password});
@@ -65,6 +69,17 @@ sub send_alerts
 
   # print __LINE__, " msg=[$msg]\n"; # content=[$content]\n";
   ($data, $msg);
+}
+
+sub read_config
+{
+  my $fnm= shift;
+  open(FI, '<:utf8', $fnm) or die "can't read $fnm";
+  my @text= <FI>;
+  my $text= join('', @text);
+  # print __LINE__, " text=[$text]\n";
+  close(FI);
+  JSON::decode_json($text);
 }
 
 1;
